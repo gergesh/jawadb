@@ -134,21 +134,17 @@ class Database:
         # Create a finalizer that will be called before module teardown
         _finalizers.add(finalize(self, _save_db, ref(self)))
 
-    def _determine_type(self, operation: str, value: Any = None):
-        """Determine and set the type based on first operation."""
-        if self._inner_container is not None:
-            return
-
-        if operation in ('setitem', 'getitem', 'delitem'):
-            self._inner_container = _JsonDict(self, {})
-        elif operation in ('append', 'extend', 'iadd'):
-            self._inner_container = _JsonList(self, [])
-
     def _ensure_dict(self):
+        if self._inner_container is None:
+            self._inner_container = _JsonDict(self, {})
+
         if not isinstance(self._inner_container, _JsonDict):
             raise TypeError("This database was initialized as a list and cannot be used as a dictionary")
 
     def _ensure_list(self):
+        if self._inner_container is None:
+            self._inner_container = _JsonList(self, [])
+
         if not isinstance(self._inner_container, _JsonList):
             raise TypeError("This database was initialized as a dictionary and cannot be used as a list")
 
@@ -158,27 +154,20 @@ class Database:
         return self._inner_container[key]
 
     def __setitem__(self, key, value):
-        self._determine_type('setitem')
-        self._ensure_dict()
         self._inner_container[key] = value
 
     def __delitem__(self, key):
-        self._determine_type('delitem')
-        self._ensure_dict()
         del self._inner_container[key]
 
     def append(self, value):
-        self._determine_type('append')
         self._ensure_list()
         self._inner_container.append(value)
 
     def extend(self, values):
-        self._determine_type('extend')
         self._ensure_list()
         self._inner_container.extend(values)
 
     def get(self, key: Any, default: Any = None) -> Any:
-        self._determine_type('getitem')
         self._ensure_dict()
         value = self._inner_container.get(key, default)
         if key not in self._inner_container:
@@ -195,7 +184,6 @@ class Database:
         return item in self._inner_container
 
     def __iadd__(self, other):
-        self._determine_type('iadd')
         self._ensure_list()
         self._inner_container += other
         return self
