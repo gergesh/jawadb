@@ -153,8 +153,8 @@ class Database:
             raise TypeError("This database was initialized as a dictionary and cannot be used as a list")
 
     def __getitem__(self, key):
-        self._determine_type('getitem')
-        self._ensure_dict()
+        if self._inner_container is None:
+            raise ValueError("Could not access uninitialized database")
         return self._inner_container[key]
 
     def __setitem__(self, key, value):
@@ -192,14 +192,7 @@ class Database:
     def __contains__(self, item) -> bool:
         if self._inner_container is None:
             return False
-        elif isinstance(self._inner_container, _JsonDict):
-            self._determine_type('getitem')
-            self._ensure_dict()
-            key = self._inner_container._validate_key(item)
-            return key in self._inner_container
-        else:
-            self._ensure_list()
-            return item in self._inner_container
+        return item in self._inner_container
 
     def __iadd__(self, other):
         self._determine_type('iadd')
