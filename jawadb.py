@@ -69,6 +69,16 @@ class _JsonDict(_JsonContainer, dict):
         super().__delitem__(key)
         self._parent_db._mark_modified()
 
+    def get(self, key: Any, default: Any = None) -> Any:
+        value = super().get(key, default)
+        if key not in self:
+            # If we're using the default value, we need to wrap it
+            # and store it in the dictionary
+            wrapped = self._wrap_value(value)
+            self[key] = wrapped
+            return wrapped
+        return value
+
 class _JsonList(_JsonContainer, list):
     """A list subclass that notifies its parent database of changes."""
 
