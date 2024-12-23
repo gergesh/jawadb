@@ -189,10 +189,17 @@ class Database:
             return wrapped
         return value
 
-    def __contains__(self, key) -> bool:
-        self._determine_type('getitem')
-        self._ensure_dict()
-        return key in self._inner_container
+    def __contains__(self, item) -> bool:
+        if self._inner_container is None:
+            return False
+        elif isinstance(self._inner_container, _JsonDict):
+            self._determine_type('getitem')
+            self._ensure_dict()
+            key = self._inner_container._validate_key(item)
+            return key in self._inner_container
+        else:
+            self._ensure_list()
+            return item in self._inner_container
 
     def __iadd__(self, other):
         self._determine_type('iadd')
