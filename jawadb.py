@@ -7,10 +7,17 @@ import atexit
 import signal
 import sys
 from typing import Any, Dict, List, Union, Optional
-from weakref import WeakSet
+from weakref import WeakSet, ref, finalize
 
 # Keep track of all active databases to ensure they're saved at exit
 _active_dbs = WeakSet()
+_finalizers = set()  # Keep finalizers alive until program exit
+
+def _save_db(db_ref):
+    """Save a database using its weak reference."""
+    db = db_ref()
+    if db is not None and db._modified:
+        db.save()
 
 def _save_all_dbs():
     """Save all active databases during interpreter shutdown."""
@@ -112,6 +119,8 @@ class Database:
 
         # Register this database instance
         _active_dbs.add(self)
+        # Create a finalizer that will be called before module teardown
+        _finalizers.add(finalize(self, _save_db, ref(self)))
 
     def _determine_type(self, operation: str, value: Any = None):
         """Determine and set the type based on first operation."""
@@ -185,15 +194,7 @@ class Database:
                     pass
                 raise
 
-    def __del__(self):
-        """Save the database when the object is deleted."""
-        if self._modified:
-            try:
-                self.save()
-            except:
-                # During interpreter shutdown, some modules might be already unloaded
-                # so we silently ignore errors here
-                pass
+    # No __del__ method - we use finalizers instead
 
     def __str__(self) -> str:
         """Delegate string representation to the inner container."""
