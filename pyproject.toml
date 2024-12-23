@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jawadb"
-version = "0.2.1"
+version = "0.2.2"
 description = "A simple persistent JSON database for Python"
 readme = "README.md"
 license = { text = "MIT" }
