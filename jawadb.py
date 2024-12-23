@@ -180,19 +180,11 @@ class Database:
         if self._modified and self._inner_container is not None:
             # Create a temporary file first to avoid corrupting the database
             temp_filename = self._filename + '.tmp'
-            try:
-                with builtins.open(temp_filename, 'w') as f:
-                    json.dump(self._inner_container, f, indent=2)
-                # If the write succeeded, rename the temp file to the actual file
-                os.replace(temp_filename, self._filename)
-                self._modified = False
-            except:
-                # If anything goes wrong, try to clean up the temp file
-                try:
-                    os.unlink(temp_filename)
-                except:
-                    pass
-                raise
+            with builtins.open(temp_filename, 'w') as f:
+                json.dump(self._inner_container, f, indent=2)
+            # If the write succeeded, rename the temp file to the actual file
+            os.replace(temp_filename, self._filename)
+            self._modified = False
 
     # No __del__ method - we use finalizers instead
 
