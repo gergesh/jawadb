@@ -167,10 +167,17 @@ class Database:
         self._ensure_list()
         self._inner_container.extend(values)
 
-    def get(self, key, default=None):
-        self._determine_type("getitem")
+    def get(self, key: Any, default: Any = None) -> Any:
+        self._determine_type('getitem')
         self._ensure_dict()
-        return self._inner_container.get(key, default)
+        value = self._inner_container.get(key, default)
+        if key not in self._inner_container:
+            # If we're using the default value, we need to wrap it
+            # and store it in the database
+            wrapped = self._inner_container._wrap_value(value)
+            self._inner_container[key] = wrapped
+            return wrapped
+        return value
 
     def __contains__(self, key) -> bool:
         self._determine_type('getitem')
