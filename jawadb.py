@@ -170,6 +170,11 @@ class Database:
         self._ensure_dict()
         return self._inner_container.get(key, default)
 
+    def __contains__(self, key) -> bool:
+        self._determine_type('getitem')
+        self._ensure_dict()
+        return key in self._inner_container
+
     def __iadd__(self, other):
         self._determine_type('iadd')
         self._ensure_list()
