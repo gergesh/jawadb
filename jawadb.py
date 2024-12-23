@@ -40,7 +40,21 @@ signal.signal(signal.SIGINT, _signal_handler)   # Handle Ctrl-C
 if hasattr(signal, 'SIGTERM'):  # SIGTERM doesn't exist on Windows
     signal.signal(signal.SIGTERM, _signal_handler)  # Handle termination
 
-class _JsonDict(dict):
+class _JsonContainer:
+    """Mixin class that provides value wrapping for JSON containers."""
+
+    def _wrap_value(self, value: Any) -> Any:
+        """Wrap a value, converting dicts/lists to tracked types."""
+        # Only wrap dicts and lists - all other JSON types pass through
+        if isinstance(value, dict) and not isinstance(value, _JsonDict):
+            return _JsonDict(self._parent_db, value)
+        elif isinstance(value, list) and not isinstance(value, _JsonList):
+            return _JsonList(self._parent_db, value)
+        # Other JSON types (str, int, float, bool, None) are left as-is
+        # Non-JSON types will be caught by json.dumps when saving
+        return value
+
+class _JsonDict(_JsonContainer, dict):
     """A dictionary subclass that notifies its parent database of changes."""
 
     def __init__(self, parent_db: 'Database', *args, **kwargs):
@@ -48,19 +62,14 @@ class _JsonDict(dict):
         self._parent_db = parent_db
 
     def __setitem__(self, key: str, value: Any):
-        # Convert nested dicts to _JsonDict
-        if isinstance(value, dict) and not isinstance(value, _JsonDict):
-            value = _JsonDict(self._parent_db, value)
-        elif isinstance(value, list):
-            value = _JsonList(self._parent_db, value)
-        super().__setitem__(key, value)
+        super().__setitem__(key, self._wrap_value(value))
         self._parent_db._mark_modified()
 
     def __delitem__(self, key: str):
         super().__delitem__(key)
         self._parent_db._mark_modified()
 
-class _JsonList(list):
+class _JsonList(_JsonContainer, list):
     """A list subclass that notifies its parent database of changes."""
 
     def __init__(self, parent_db: 'Database', *args, **kwargs):
@@ -72,13 +81,6 @@ class _JsonList(list):
                 self[i] = _JsonDict(parent_db, value)
             elif isinstance(value, list):
                 self[i] = _JsonList(parent_db, value)
-
-    def _wrap_value(self, value: Any) -> Any:
-        if isinstance(value, dict):
-            return _JsonDict(self._parent_db, value)
-        elif isinstance(value, list):
-            return _JsonList(self._parent_db, value)
-        return value
 
     def append(self, value: Any):
         super().append(self._wrap_value(value))
