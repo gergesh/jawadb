@@ -1,9 +1,9 @@
 __all__ = ['load']
 
+import atexit
+import builtins
 import json
 import os
-import builtins
-import atexit
 import signal
 import sys
 from typing import Any, Dict, List, Union, Optional
