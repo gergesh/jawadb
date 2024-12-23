@@ -165,6 +165,11 @@ class Database:
         self._ensure_list()
         self._inner_container.extend(values)
 
+    def get(self, key, default=None):
+        self._determine_type("getitem")
+        self._ensure_dict()
+        return self._inner_container.get(key, default)
+
     def __iadd__(self, other):
         self._determine_type('iadd')
         self._ensure_list()
