@@ -191,13 +191,13 @@ class Database:
     def __str__(self) -> str:
         """Delegate string representation to the inner container."""
         if self._inner_container is None:
-            return "{}" if self._determine_type('getitem') else "[]"
+            return "{}"
         return str(self._inner_container)
 
     def __repr__(self) -> str:
         """Delegate detailed string representation to the inner container."""
         if self._inner_container is None:
-            return "{}" if self._determine_type('getitem') else "[]"
+            return "{}"
         return repr(self._inner_container)
 
 def load(filename: str) -> Database:
