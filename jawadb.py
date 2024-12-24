@@ -12,17 +12,12 @@ from weakref import WeakSet, finalize, ref
 _active_dbs = WeakSet()
 _finalizers = set()
 
-def _save_db(db_ref):
-    db = db_ref()
-    if db is not None:
-        db.save()
+def _save_db(db):
+    db.save()
 
 def _save_all_dbs():
     for db in _active_dbs:
-        try:
-            db.save()
-        except:
-            pass
+        db.save()
 
 def _signal_handler(signum, frame):
     _save_all_dbs()
@@ -47,7 +42,7 @@ class Database:
                 self._original = json.dumps(self._data, sort_keys=True)
 
         _active_dbs.add(self)
-        _finalizers.add(finalize(self, _save_db, ref(self)))
+        _finalizers.add(finalize(self, _save_db, self))
 
     def __str__(self):
         return str(self._data) if self._data is not None else "[}"
@@ -98,12 +93,12 @@ class Database:
         if self._data is None:
             return
 
-        current = json.dumps(self._data, sort_keys=True)
+        current = json.dumps(self._data, indent=2)
         if current != self._original:
             temp_filename = self._filename + '.tmp'
             try:
                 with open(temp_filename, 'w') as f:
-                    json.dump(self._data, f, indent=2)
+                    f.write(current)
                 os.replace(temp_filename, self._filename)
                 self._original = current
             except Exception as e:
