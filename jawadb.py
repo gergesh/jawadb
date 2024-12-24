@@ -50,27 +50,27 @@ class Database:
     def __repr__(self):
         return repr(self._data) if self._data is not None else "[}"
 
-    def _ensure_initialized(self):
+    def _ensure_initialized(self, typ=None):
         if self._data is None:
-            self._data = {}
-            self._original = "{}"
+            self._data = typ()
+            self._original = json.dumps(typ)
 
     def validate_key(self, key):
         if isinstance(self._data, dict) and not isinstance(key, str):
             raise TypeError(f"Dictionary keys must be strings, not {type(key).__name__}")
 
     def get(self, key, default=None):
-        self._ensure_initialized()
+        self._ensure_initialized(dict)
         self.validate_key(key)
         return self._data.get(key, default)
 
     def __getitem__(self, key):
-        self._ensure_initialized()
+        self._ensure_initialized(dict if type(key) == str else int)
         self.validate_key(key)
         return self._data[key]
 
     def __setitem__(self, key, value):
-        self._ensure_initialized()
+        self._ensure_initialized(dict if type(key) == str else int)
         self.validate_key(key)
         self._data[key] = value
 
