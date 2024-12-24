@@ -12,9 +12,6 @@ from weakref import WeakSet, finalize, ref
 _active_dbs = WeakSet()
 _finalizers = set()
 
-def _save_db(db):
-    db.save()
-
 def _save_all_dbs():
     for db in _active_dbs:
         db.save()
@@ -42,7 +39,7 @@ class Database:
                 self._original = json.dumps(self._data, sort_keys=True)
 
         _active_dbs.add(self)
-        _finalizers.add(finalize(self, _save_db, self))
+        _finalizers.add(finalize(self, self.save))
 
     def __str__(self):
         return str(self._data) if self._data is not None else "[}"
@@ -53,7 +50,7 @@ class Database:
     def _ensure_initialized(self, typ=None):
         if self._data is None:
             self._data = typ()
-            self._original = json.dumps(typ)
+            self._original = json.dumps(self._data)
 
     def validate_key(self, key):
         if isinstance(self._data, dict) and not isinstance(key, str):
