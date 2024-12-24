@@ -55,6 +55,36 @@ class Database:
     def __repr__(self):
         return repr(self._data) if self._data is not None else "[}"
 
+    def _ensure_initialized(self):
+        if self._data is None:
+            self._data = {}
+            self._original = "{}"
+
+    def validate_key(self, key):
+        if isinstance(self._data, dict) and not isinstance(key, str):
+            raise TypeError(f"Dictionary keys must be strings, not {type(key).__name__}")
+
+    def get(self, key, default=None):
+        self._ensure_initialized()
+        self.validate_key(key)
+        return self._data.get(key, default)
+
+    def __getitem__(self, key):
+        self._ensure_initialized()
+        self.validate_key(key)
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        self._ensure_initialized()
+        self.validate_key(key)
+        self._data[key] = value
+
+    def __contains__(self, item):
+        if self._data is None:
+            return False
+        self.validate_key(item)
+        return item in self._data
+
     def __getattr__(self, name):
         """Delegate unknown attributes/methods to the underlying container."""
         if self._data is None:
