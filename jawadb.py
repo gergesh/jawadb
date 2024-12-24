@@ -96,6 +96,7 @@ class Database:
             try:
                 with open(temp_filename, 'w') as f:
                     f.write(current)
+                    f.write("\n")
                 os.replace(temp_filename, self._filename)
                 self._original = current
             except Exception as e:
